@@ -1,0 +1,6 @@
+<!DOCTYPE html>
+<html><head><title>Dashboard</title></head><body>
+<h1>Wanafunzi</h1><a href="/add">+ Ongeza Mwanafunzi</a> | <a href="/logout">Logout</a><br><br>
+<table border="1" width="100%"><tr><th>ID</th><th>Jina</th><th>Course</th><th>Grade</th><th>Actions</th></tr>
+{% for s in students %}<tr><td>{{s[0]}}</td><td>{{s[1]}}</td><td>{{s[2]}}</td><td>{{s[3]}}</td>
+<td><a href="/edit/{{s[0]}}">Hariri</a> | <a href="/delete/{{s[0]}}">Futa</a></td></tr>{% endfor %}</table></body></html>
