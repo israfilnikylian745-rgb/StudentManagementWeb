@@ -1,92 +1,115 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from database import init_db, add_student, get_all_students, get_student, update_student, delete_student
+import sqlite3
 import os
 
 app = Flask(__name__)
+app.secret_key = 'secretkey123'
+DB_NAME = 'students.db'
 
-# 1. SECRET KEY - Muhimu kwa login na flash messages
-app.secret_key = 'kaka123secret_student_system'
+# Tengeneza Database kiotomatiki
+def init_db():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS students (id INTEGER PRIMARY KEY, name TEXT, course TEXT, grade TEXT)''')
+    # Weka admin kama haipo
+    c.execute("SELECT * FROM users WHERE username='admin'")
+    if not c.fetchone():
+        c.execute("INSERT INTO users (username, password) VALUES ('admin', '1234')")
+    conn.commit()
+    conn.close()
 
-# 2. USER NA PASSWORD YA KUDUMMY - badilisha hapa
-USERNAME = 'admin'
-PASSWORD = '1234'
+init_db()
 
-# 3. HII NDIO INATENGENEZA TABLE KIOTOMATIKI RENDER IKIFUNGUKA
-with app.app_context():
-    init_db()
-
-
-# ROUTE YA LOGIN
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        if username == USERNAME and password == PASSWORD:
-            session['logged_in'] = True
-            return redirect(url_for('index'))
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
+        user = c.fetchone()
+        conn.close()
+        if user:
+            session['user'] = username
+            return redirect('/index')
         else:
-            flash('Username au Password si sahihi', 'danger')
+            flash('Username au Password si sahihi')
     return render_template('login.html')
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+        conn.commit()
+        conn.close()
+        flash('Umejisajili. Tafadhali ingia')
+        return redirect('/login')
+    return render_template('register.html')
 
-# ROUTE YA LOGOUT
-@app.route('/logout')
-def logout():
-    session.pop('logged_in', None)
-    return redirect(url_for('login'))
-
-
-# ROUTE KUU - ORODHA YA WANAFUNZI
 @app.route('/index')
 def index():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    students = get_all_students()
+    if 'user' not in session: return redirect('/login')
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT * FROM students")
+    students = c.fetchall()
+    conn.close()
     return render_template('index.html', students=students)
 
-
-# KUONGEZA MDAFUNZI
 @app.route('/add', methods=['GET', 'POST'])
 def add():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
+    if 'user' not in session: return redirect('/login')
     if request.method == 'POST':
         name = request.form['name']
         course = request.form['course']
         grade = request.form['grade']
-        add_student(name, course, grade)
-        flash('Mwanafunzi ameongezwa kikamilifu!', 'success')
-        return redirect(url_for('index'))
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute("INSERT INTO students (name, course, grade) VALUES (?, ?, ?)", (name, course, grade))
+        conn.commit()
+        conn.close()
+        return redirect('/index')
     return render_template('add_student.html')
 
-
-# KUHARIRI MDAFUNZI
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    student = get_student(id)
+    if 'user' not in session: return redirect('/login')
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
     if request.method == 'POST':
         name = request.form['name']
         course = request.form['course']
         grade = request.form['grade']
-        update_student(id, name, course, grade)
-        flash('Taarifa zimesasishwa!', 'success')
-        return redirect(url_for('index'))
+        c.execute("UPDATE students SET name=?, course=?, grade=? WHERE id=?", (name, course, grade, id))
+        conn.commit()
+        conn.close()
+        return redirect('/index')
+    c.execute("SELECT * FROM students WHERE id=?", (id,))
+    student = c.fetchone()
+    conn.close()
     return render_template('edit_student.html', student=student)
 
-
-# KUFUTA MDAFUNZI
 @app.route('/delete/<int:id>')
 def delete(id):
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    delete_student(id)
-    flash('Mwanafunzi amefutwa!', 'warning')
-    return redirect(url_for('index'))
+    if 'user' not in session: return redirect('/login')
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("DELETE FROM students WHERE id=?", (id,))
+    conn.commit()
+    conn.close()
+    return redirect('/index')
 
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect('/login')
 
 if __name__ == '__main__':
     app.run(debug=True)
