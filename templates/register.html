@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register - Student System</title>
+    <style>
+        body {font-family: Arial; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;}
+        .register-box {background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 350px;}
+        h2 {text-align: center; color: #333; margin-bottom: 30px;}
+        input {width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;}
+        button {width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer;}
+        button:hover {background: #218838;}
+        .alert {color: red; text-align: center; margin-bottom: 15px;}
+        .link {text-align: center; margin-top: 15px;}
+        .link a {color: #667eea; text-decoration: none;}
+    </style>
+</head>
+<body>
+    <div class="register-box">
+        <h2>Jisajili</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        <form method="POST">
+            <input type="text" name="username" placeholder="Chagua Username" required>
+            <input type="password" name="password" placeholder="Chagua Password" required>
+            <input type="password" name="confirm_password" placeholder="Rudia Password" required>
+            <button type="submit">Register</button>
+        </form>
+        <div class="link">
+            <a href="/login">Tayari una account? Ingia hapa</a>
+        </div>
+    </div>
+</body>
+</html>
