@@ -1,6 +1,51 @@
 <!DOCTYPE html>
-<html><head><title>Dashboard</title></head><body>
-<h1>Wanafunzi</h1><a href="/add">+ Ongeza Mwanafunzi</a> | <a href="/logout">Logout</a><br><br>
-<table border="1" width="100%"><tr><th>ID</th><th>Jina</th><th>Course</th><th>Grade</th><th>Actions</th></tr>
-{% for s in students %}<tr><td>{{s[0]}}</td><td>{{s[1]}}</td><td>{{s[2]}}</td><td>{{s[3]}}</td>
-<td><a href="/edit/{{s[0]}}">Hariri</a> | <a href="/delete/{{s[0]}}">Futa</a></td></tr>{% endfor %}</table></body></html>
+<html>
+<head>
+    <title>Dashboard - Student System</title>
+    <style>
+        body {font-family: Arial; background: #f5f5f5; margin: 0; padding: 20px;}
+       .container {max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);}
+        h2 {color: #667eea;}
+       .btn {padding: 10px 15px; background: #28a745; color: white; text-decoration: none; border-radius: 5px;}
+       .btn-danger {background: #dc3545;}
+       .btn-edit {background: #ffc107; color: black;}
+        table {width: 100%; border-collapse: collapse; margin-top: 20px;}
+        th, td {padding: 12px; border: 1px solid #ddd; text-align: left;}
+        th {background: #667eea; color: white;}
+       .logout {float: right; background: #dc3545;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/logout" class="btn logout">Toka</a>
+        <h2>Karibu {{ session['user'] }} - Orodha ya Wanafunzi</h2>
+        <a href="/add" class="btn">+ Ongeza Mwanafunzi</a>
+        
+        {% if students %}
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Jina</th>
+                <th>Kozi</th>
+                <th>Grade</th>
+                <th>Vitendo</th>
+            </tr>
+            {% for student in students %}
+            <tr>
+                <td>{{ student[0] }}</td>
+                <td>{{ student[1] }}</td>
+                <td>{{ student[2] }}</td>
+                <td>{{ student[3] }}</td>
+                <td>
+                    <a href="/edit/{{ student[0] }}" class="btn btn-edit">Hariri</a>
+                    <a href="/delete/{{ student[0] }}" class="btn btn-danger" onclick="return confirm('Una uhakika?')">Futa</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p style="margin-top: 20px;">Hakuna wanafunzi bado. Bofya 'Ongeza Mwanafunzi' kuanza.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
