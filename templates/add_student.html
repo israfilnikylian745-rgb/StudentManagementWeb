@@ -1,6 +1,25 @@
-<!DOCTYPE html><html><head><title>Ongeza</title></head><body>
-<h2>Ongeza Mwanafunzi Mpya</h2><form method="POST">
-Jina: <input name="name" required><br><br>
-Course: <input name="course" required><br><br>
-Grade: <input name="grade" required><br><br>
-<button>Save</button></form><br><a href="/index">Rudi</a></body></html>
+<!DOCTYPE html>
+<html>
+<head><title>Add Student</title></head>
+<body style="font-family:Arial; padding:20px;">
+<div style="max-width:500px; margin:auto; background:white; padding:30px; border-radius:10px;">
+<h2>Add New Student</h2>
+<form method="POST">
+    <label>Name:</label><br>
+    <input type="text" name="name" required style="width:100%; padding:8px;"><br><br>
+    
+    <label>Course:</label><br>
+    <input type="text" name="course" required style="width:100%; padding:8px;"><br><br>
+    
+    <label>Grade:</label><br>
+    <input type="text" name="grade" required style="width:100%; padding:8px;"><br><br>
+    
+    <label>Age:</label><br> <!-- <- Tumeongeza hii -->
+    <input type="number" name="age" required style="width:100%; padding:8px;"><br><br>
+    
+    <button type="submit" class="btn">Save</button>
+    <a href="/index">Cancel</a>
+</form>
+</div>
+</body>
+</html>
