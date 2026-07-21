@@ -1,93 +1,92 @@
-from flask import Flask, render_template, request, redirect, session, flash
-from functions import get_all_students, add_student, search_students, get_student_by_id, update_student, delete_student, create_user, check_user
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+from database import init_db, add_student, get_all_students, get_student, update_student, delete_student
+import os
 
 app = Flask(__name__)
-app.secret_key = "mysecretkey123" # Badili hii iwe ngumu zaidi baadae
 
-# HII NI DECORATOR YA KUZUIA MTU ASIYE NA LOGIN
-def login_required(f):
-    def wrap(*args, **kwargs):
-        if 'user' in session:
-            return f(*args, **kwargs)
-        else:
-            return redirect("/login")
-    wrap.__name__ = f.__name__
-    return wrap
+# 1. SECRET KEY - Muhimu kwa login na flash messages
+app.secret_key = 'kaka123secret_student_system'
 
-# ROUTE YA REGISTER
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        if create_user(username, password):
-            flash("Account created successfully! Please login.")
-            return redirect("/login")
-        else:
-            flash("Username already exists!")
-    return render_template("register.html")
+# 2. USER NA PASSWORD YA KUDUMMY - badilisha hapa
+USERNAME = 'admin'
+PASSWORD = '1234'
+
+# 3. HII NDIO INATENGENEZA TABLE KIOTOMATIKI RENDER IKIFUNGUKA
+with app.app_context():
+    init_db()
+
 
 # ROUTE YA LOGIN
-@app.route("/login", methods=["GET", "POST"])
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        user = check_user(username, password)
-        if user:
-            session["user"] = username
-            return redirect("/")
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username == USERNAME and password == PASSWORD:
+            session['logged_in'] = True
+            return redirect(url_for('index'))
         else:
-            flash("Invalid username or password!")
-    return render_template("login.html")
+            flash('Username au Password si sahihi', 'danger')
+    return render_template('login.html')
+
 
 # ROUTE YA LOGOUT
-@app.route("/logout")
+@app.route('/logout')
 def logout():
-    session.pop("user", None)
-    return redirect("/login")
+    session.pop('logged_in', None)
+    return redirect(url_for('login'))
 
-# HOME PAGE - ORODHA YA WANAFUNZI
-@app.route("/")
-@login_required
-def home():
-    keyword = request.args.get("search")
-    if keyword:
-        students = search_students(keyword)
-    else:
-        students = get_all_students()
-    return render_template("index.html", students=students, username=session["user"])
 
-# ROUTE YA KUONGEZA MWANAFUNZI
-@app.route("/add", methods=["GET", "POST"])
-@login_required
+# ROUTE KUU - ORODHA YA WANAFUNZI
+@app.route('/index')
+def index():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    students = get_all_students()
+    return render_template('index.html', students=students)
+
+
+# KUONGEZA MDAFUNZI
+@app.route('/add', methods=['GET', 'POST'])
 def add():
-    if request.method == "POST":
-        name = request.form["name"]
-        age = request.form["age"]
-        add_student(name, age)
-        return redirect("/")
-    return render_template("add_student.html")
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        name = request.form['name']
+        course = request.form['course']
+        grade = request.form['grade']
+        add_student(name, course, grade)
+        flash('Mwanafunzi ameongezwa kikamilifu!', 'success')
+        return redirect(url_for('index'))
+    return render_template('add_student.html')
 
-# ROUTE YA KUHARIRI MWANAFUNZI
-@app.route("/edit/<int:student_id>", methods=["GET", "POST"])
-@login_required
-def edit(student_id):
-    if request.method == "POST":
-        name = request.form["name"]
-        age = request.form["age"]
-        update_student(student_id, name, age)
-        return redirect("/")
-    
-    student = get_student_by_id(student_id)
-    return render_template("edit_student.html", student=student)
 
-# ROUTE YA KUFUTA MWANAFUNZI
-@app.route("/delete/<int:student_id>")
-@login_required
-def delete(student_id):
-    delete_student(student_id)
-    return redirect("/")
+# KUHARIRI MDAFUNZI
+@app.route('/edit/<int:id>', methods=['GET', 'POST'])
+def edit(id):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    student = get_student(id)
+    if request.method == 'POST':
+        name = request.form['name']
+        course = request.form['course']
+        grade = request.form['grade']
+        update_student(id, name, course, grade)
+        flash('Taarifa zimesasishwa!', 'success')
+        return redirect(url_for('index'))
+    return render_template('edit_student.html', student=student)
 
-if __name__ == "__main__":
-    app.run(debug=True) 
+
+# KUFUTA MDAFUNZI
+@app.route('/delete/<int:id>')
+def delete(id):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    delete_student(id)
+    flash('Mwanafunzi amefutwa!', 'warning')
+    return redirect(url_for('index'))
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
